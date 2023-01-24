@@ -14,7 +14,7 @@ const connect = mysql.createConnection(
 
 connect.connect((err) => {
     if (err) throw err;
-    console.log(`Conneted to the employee database.`)
+    console.log(`Connected to the employee database.`)
     basePrompt();
 });
 
@@ -116,7 +116,7 @@ addDepartment = () => {
                 if (addDepartment) {
                     return true;
                 } else {
-                    console.log(`Please enter a department`);
+                    log.red(`Please enter a department`);
                     return false;
                 }
             }
@@ -131,6 +131,106 @@ addDepartment = () => {
     })
 };
 
-// addRole = () => {};
-// addEmployee = () => {};
+addRole = () => {
+    connect.query(`SELECT department_name, id FROM department`, (err, data) => {
+        let departmentOptions = data.map(({department_name, id}) => ({ name: department_name, value: id }));
+
+        inquirer.prompt([
+            {
+                type: `input`,
+                name: `roleName`,
+                message: `What is the role you would like to add?`,
+                validate: roleName => {
+                    if (roleName) {
+                        return true;
+                    } else {
+                        log.red(`Please enter the name of the role you would like to add`);
+                        return false
+                    }
+                }
+            },
+            {
+                type: `input`,
+                name: `roleSalary`,
+                message: `Enter the salary for this role`,
+                validate: roleSalary => {
+                    if (roleSalary) {
+                        return true;
+                    } else {
+                        log.red(`Please enter the salary for this role`);
+                        return false;
+                    }
+                }
+            },
+            {
+                type: `list`,
+                name: `roleDepartment`,
+                message: `Please select the department this role works in`,
+                choices: departmentOptions,
+                validate: roleDepartment => {
+                    if (roleDepartment) {
+                        return true;
+                    } else {
+                        return false; 
+                    }
+                }
+            }
+        ]).then(roleInput => {
+            const params = [roleInput.roleName, roleInput.roleSalary, roleInput.roleDepartment];
+            connect.query(`INSERT INTO roles(title, salary, department_id) VALUES (?, ?, ?)`, params, (err, result) => {
+                if (err) throw err;
+                log.green(`Added ` + roleInput.roleName + ` to roles.`);
+                // console.log(result);
+                basePrompt();
+                })
+            })
+    })
+};
+
+addEmployee = () => {
+    connect.query(`SELECT title, role_id FROM roles`, (err, data) => {
+        const employeeRoles = data.map(({title, role_id}) => ({ name: title, value: role_id }))
+    })
+        Inquirer.prompt([
+            {
+                type: 'input',
+                name: 'employeeFn',
+                message: 'What is the first name of this employee?',
+                validate: nameInput => {
+                    if (nameInput) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            },
+            {
+                type: 'input',
+                name: 'employeeLn',
+                message: 'What is the last name of this employee?',
+                validate: nameInput => {
+                    if (nameInput) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            },
+            {
+                type: 'list',
+                name: 'employeeRole',
+                message: 'What is the role of this employee?',
+                choices: employeeRoles,
+                validate: userInput => {
+                    if (userInput) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        ])
+    
+   
+};
 // updateEmployeeRole = () => {};
