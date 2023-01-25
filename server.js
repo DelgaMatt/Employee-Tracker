@@ -176,7 +176,7 @@ addRole = () => {
                 }
             }
         ]).then(roleInput => {
-            const params = [roleInput.roleName, roleInput.roleSalary, roleInput.roleDepartment];
+            let params = [roleInput.roleName, roleInput.roleSalary, roleInput.roleDepartment];
             connect.query(`INSERT INTO roles(title, salary, department_id) VALUES (?, ?, ?)`, params, (err, result) => {
                 if (err) throw err;
                 log.green(`Added ` + roleInput.roleName + ` to roles.`);
@@ -188,10 +188,11 @@ addRole = () => {
 };
 
 addEmployee = () => {
-    connect.query(`SELECT title, role_id FROM roles`, (err, data) => {
-        const employeeRoles = data.map(({title, role_id}) => ({ name: title, value: role_id }))
-    })
-        Inquirer.prompt([
+    connect.query(`SELECT title, id FROM roles`, (err, data) => {
+        const employeeRoles = data.map(({title, id}) => ({ name: title, value: id }))
+        console.log(employeeRoles);
+
+        inquirer.prompt([
             {
                 type: 'input',
                 name: 'employeeFn',
@@ -221,15 +222,50 @@ addEmployee = () => {
                 name: 'employeeRole',
                 message: 'What is the role of this employee?',
                 choices: employeeRoles,
-                validate: userInput => {
-                    if (userInput) {
+                validate: nameInput => {
+                    if (nameInput) {
                         return true;
                     } else {
                         return false;
                     }
                 }
-            }
-        ])
+            },
+        ]).then(nameInput => {
+            const employeeParams = [nameInput.employeeFn, nameInput.employeeLn, nameInput.employeeRole];
+            connect.query(`SELECT * FROM employee`, employeeParams, (err ,data) => {
+                const employeeManagers = data.map(({first_name, last_name, role_id}) => ({ name: first_name + ` ` + last_name, value: role_id }))
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'employeeManager',
+                        message: `Select the current manager for this employee`,
+                        choices: employeeManagers,
+                        validate: userInput => {
+                            if (userInput) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }
+                    } 
+                ]).then(userManInput => {
+                    employeeParams.push(userManInput.employeeManager);
+                    console.log(employeeParams);
+                    connect.query(`INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, employeeParams, (err, result) => {
+                        if (err) throw err;
+                        log.green(`Added ` + nameInput.employeeFn + ` ` + nameInput.employeeLn + ` to employees`);
+                        // console.log(result);
+                        basePrompt();
+                        })
+                    
+                })
+            })
+  
+        })
+      
+
+    })
+
     
    
 };
