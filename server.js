@@ -35,7 +35,7 @@ basePrompt = () => {
             ]
         }
     ]).then(userInput => {
-        switch(userInput.actions){
+        switch (userInput.actions) {
             case `View all Departments`:
                 viewDepartments();
                 break;
@@ -133,7 +133,7 @@ addDepartment = () => {
 
 addRole = () => {
     connect.query(`SELECT department_name, id FROM department`, (err, data) => {
-        let departmentOptions = data.map(({department_name, id}) => ({ name: department_name, value: id }));
+        let departmentOptions = data.map(({ department_name, id }) => ({ name: department_name, value: id }));
 
         inquirer.prompt([
             {
@@ -165,13 +165,14 @@ addRole = () => {
             {
                 type: `list`,
                 name: `roleDepartment`,
-                message: `Please select the department this role works in`,
+                message: `Select the department this role works in`,
                 choices: departmentOptions,
                 validate: roleDepartment => {
                     if (roleDepartment) {
                         return true;
                     } else {
-                        return false; 
+                        log.red(`Please select the department this role works in`)
+                        return false;
                     }
                 }
             }
@@ -182,14 +183,14 @@ addRole = () => {
                 log.green(`Added ` + roleInput.roleName + ` to roles.`);
                 // console.log(result);
                 basePrompt();
-                })
             })
+        })
     })
 };
 
 addEmployee = () => {
     connect.query(`SELECT title, id FROM roles`, (err, data) => {
-        const employeeRoles = data.map(({title, id}) => ({ name: title, value: id }))
+        const employeeRoles = data.map(({ title, id }) => ({ name: title, value: id }));
         console.log(employeeRoles);
 
         inquirer.prompt([
@@ -201,6 +202,7 @@ addEmployee = () => {
                     if (nameInput) {
                         return true;
                     } else {
+                        log.red(`Please enter the first name of this employee`)
                         return false;
                     }
                 }
@@ -213,6 +215,7 @@ addEmployee = () => {
                     if (nameInput) {
                         return true;
                     } else {
+                        log.red(`Please enter the last name of this employee`);
                         return false;
                     }
                 }
@@ -226,14 +229,15 @@ addEmployee = () => {
                     if (nameInput) {
                         return true;
                     } else {
+                        log.red(`Please enter the role of this employee`)
                         return false;
                     }
                 }
             },
         ]).then(nameInput => {
             const employeeParams = [nameInput.employeeFn, nameInput.employeeLn, nameInput.employeeRole];
-            connect.query(`SELECT * FROM employee`, employeeParams, (err ,data) => {
-                const employeeManagers = data.map(({first_name, last_name, role_id}) => ({ name: first_name + ` ` + last_name, value: role_id }))
+            connect.query(`SELECT * FROM employee`, employeeParams, (err, data) => {
+                const employeeManagers = data.map(({ first_name, last_name, role_id }) => ({ name: first_name + ` ` + last_name, value: role_id }))
                 inquirer.prompt([
                     {
                         type: 'list',
@@ -244,29 +248,83 @@ addEmployee = () => {
                             if (userInput) {
                                 return true;
                             } else {
+                                log.red(`Please select a manager for this employee`)
                                 return false;
                             }
                         }
-                    } 
-                ]).then(userManInput => {
-                    employeeParams.push(userManInput.employeeManager);
+                    }
+                ]).then(userInput => {
+                    employeeParams.push(userInput.employeeManager);
                     console.log(employeeParams);
                     connect.query(`INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, employeeParams, (err, result) => {
                         if (err) throw err;
                         log.green(`Added ` + nameInput.employeeFn + ` ` + nameInput.employeeLn + ` to employees`);
                         // console.log(result);
                         basePrompt();
-                        })
-                    
+                    })
+
                 })
             })
-  
+
         })
-      
-
     })
-
-    
-   
 };
-// updateEmployeeRole = () => {};
+
+updateEmployeeRole = () => {
+    connect.query(`SELECT * FROM employee`, (err, employeeData) => {
+        const allEmployees = employeeData.map(({ first_name, last_name, role_id }) => ({ name: first_name + ` ` + last_name, value: role_id }))
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'employeeToUpdate',
+                message: `Select the employee who's role you'd like to update`,
+                choices: allEmployees,
+                validate: userInput => {
+                    if (userInput) {
+                        return true;
+                    } else {
+                        log.red(`Please select a manager for this employee`)
+                        return false;
+                    }
+                }
+            }
+        ]).then(userInput => {
+            //employeeId
+            let employeeParams = [userInput.employeeToUpdate];
+            console.log(employeeParams);
+            connect.query(`SELECT * FROM roles`, (err, data) => {
+                const employeeRoles = data.map(({ title, id }) => ({ name: title, value: id }));
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'updateRole',
+                        message: `Select the employee's new role`,
+                        choices: employeeRoles,
+                        validate: userInput => {
+                            if (userInput) {
+                                return true;
+                            } else {
+                                log.red(`Please select a manager for this employee`)
+                                return false;
+                            }
+                        }
+                    }
+                ]).then(roleInput => {
+                    employeeParams.push(roleInput.updateRole);
+                    console.log(employeeParams);
+                
+                    let updatedArray = employeeParams[0];
+                    employeeParams[0] = roleInput.updateRole;
+                    employeeParams[1] = userInput.employeeToUpdate;
+                    // employeeParams = [employeeParams[0], employeeParams[1] = [employeeParams[1], employeeParams[0]]];
+                    console.log(employeeParams);
+
+                    connect.query(`UPDATE employee SET role_id = ? WHERE id = ?`, employeeParams, (err, data) => {
+                        if(err) throw err;
+                        log.green(`Updated employee role to ${roleInput.name}`)
+                    })
+                })
+            })
+        })
+    })
+};
