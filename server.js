@@ -1,20 +1,21 @@
 const mysql = require(`mysql2`);
 const inquirer = require(`inquirer`);
 const cTable = require('console.table');
+require(`dotenv`).config();
 const { color, log, red, green, cyan, cyanBright } = require('console-log-colors');
 
 const connect = mysql.createConnection(
     {
-        host: `localhost`,
-        user: `root`,
-        password: ``,
-        database: `employee_db`
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        host: process.env.DB_HOST
     },
 );
 
 connect.connect((err) => {
     if (err) throw err;
-    console.log(`Connected to the employee database.`)
+    log.green(`Connected to the employee database.`)
     basePrompt();
 });
 
@@ -32,11 +33,7 @@ basePrompt = () => {
                 `Add a Role`,
                 `Add an Employee`,
                 `Update an Employee Role`,
-                'Update Employee Manager',
-                `View Employees by Manager`,
-                `View Employees by Department`,
-                `Delete Deparments, Roles, or Employees`,
-                `View total utilized budget of a Department`
+                'Finish'
             ]
         }
     ]).then(userInput => {
@@ -63,9 +60,11 @@ basePrompt = () => {
                 updateEmployeeRole();
                 break;
             case `Finish`:
+                log.red(`Ending connection to database..`);
                 connect.end();
                 break;
             default:
+                log.red(`Ending connection to database..`);
                 connect.end();
         }
     })
@@ -117,6 +116,7 @@ addDepartment = () => {
     ]).then(nameInput => {
         connect.query(`INSERT INTO department(department_name) VALUES (?)`, nameInput.addDepartment, (err, result) => {
             if (err) throw err;
+            console.table(nameInput);
             log.green(`Added ` + nameInput.addDepartment + ` to departments.`);
             basePrompt();
         })
@@ -173,7 +173,6 @@ addRole = () => {
             connect.query(`INSERT INTO roles(title, salary, department_id) VALUES (?, ?, ?)`, params, (err, result) => {
                 if (err) throw err;
                 log.green(`Added ` + roleInput.roleName + ` to roles.`);
-                // console.log(result);
                 basePrompt();
             })
         })
@@ -251,7 +250,6 @@ addEmployee = () => {
                     connect.query(`INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, employeeParams, (err, result) => {
                         if (err) throw err;
                         log.green(`Added ` + nameInput.employeeFn + ` ` + nameInput.employeeLn + ` to employees`);
-                       
                         basePrompt();
                     })
 
@@ -302,15 +300,13 @@ updateEmployeeRole = () => {
                     }
                 ]).then(roleInput => {
                     employeeParams.push(roleInput.updateRole);
-                
-                    // let updatedArray = employeeParams[0];
+ 
                     employeeParams[0] = roleInput.updateRole;
                     employeeParams[1] = userInput.employeeToUpdate;
 
                     connect.query(`UPDATE employee SET role_id = ? WHERE id = ?`, employeeParams, (err, data) => {
                         if(err) throw err;
                         log.green(`Updated employee role`);
-                        
                         basePrompt();
                     })
                 })
