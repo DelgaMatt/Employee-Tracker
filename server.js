@@ -31,7 +31,12 @@ basePrompt = () => {
                 `Add a Department`,
                 `Add a Role`,
                 `Add an Employee`,
-                `Update an Employee Role`
+                `Update an Employee Role`,
+                'Update Employee Manager',
+                `View Employees by Manager`,
+                `View Employees by Department`,
+                `Delete Deparments, Roles, or Employees`,
+                `View total utilized budget of a Department`
             ]
         }
     ]).then(userInput => {
@@ -57,24 +62,11 @@ basePrompt = () => {
             case `Update an Employee Role`:
                 updateEmployeeRole();
                 break;
+            case `Finish`:
+                connect.end();
+                break;
             default:
-                finish();
-
-            // case `Update Employee Managers`:
-            //     updateManager();
-            //     break;
-            // case `View Employees by Manager`:
-            //     viewByManager();
-            //     break;
-            // case `View Employees by Department`:
-            //     viewbyDepartment();
-            //     break;
-            // case `Delete Deparments, Roles, or Employees`:
-            //     deleteBy();
-            //     break;
-            // case `View total utilized budget of a Department`:
-            //     viewBudget();
-            //     break;
+                connect.end();
         }
     })
 };
@@ -259,7 +251,7 @@ addEmployee = () => {
                     connect.query(`INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, employeeParams, (err, result) => {
                         if (err) throw err;
                         log.green(`Added ` + nameInput.employeeFn + ` ` + nameInput.employeeLn + ` to employees`);
-                        // console.log(result);
+                       
                         basePrompt();
                     })
 
@@ -289,7 +281,6 @@ updateEmployeeRole = () => {
                 }
             }
         ]).then(userInput => {
-            //employeeId
             let employeeParams = [userInput.employeeToUpdate];
             console.log(employeeParams);
             connect.query(`SELECT * FROM roles`, (err, data) => {
@@ -311,17 +302,16 @@ updateEmployeeRole = () => {
                     }
                 ]).then(roleInput => {
                     employeeParams.push(roleInput.updateRole);
-                    console.log(employeeParams);
                 
-                    let updatedArray = employeeParams[0];
+                    // let updatedArray = employeeParams[0];
                     employeeParams[0] = roleInput.updateRole;
                     employeeParams[1] = userInput.employeeToUpdate;
-                    // employeeParams = [employeeParams[0], employeeParams[1] = [employeeParams[1], employeeParams[0]]];
-                    console.log(employeeParams);
 
                     connect.query(`UPDATE employee SET role_id = ? WHERE id = ?`, employeeParams, (err, data) => {
                         if(err) throw err;
-                        log.green(`Updated employee role to ${roleInput.name}`)
+                        log.green(`Updated employee role`);
+                        
+                        basePrompt();
                     })
                 })
             })
