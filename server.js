@@ -90,7 +90,16 @@ viewRoles = () => {
 
 viewEmployees = () => {
     log.green(`Showing all employees.. \n`);
-    connect.query(`SELECT * FROM employee`, (err, result) => {
+    connect.query(`SELECT employee.id, 
+            employee.first_name, 
+            employee.last_name, 
+            roles.title, 
+            department.department_name AS department,
+            roles.salary, 
+            CONCAT (manager.first_name, " ", manager.last_name) AS manager FROM employee
+            LEFT JOIN roles ON employee.role_id = roles.id
+            LEFT JOIN department ON roles.department_id = department.id
+            LEFT JOIN employee manager ON employee.manager_id = manager.id`, (err, result) => {
         if (err) throw err;
         console.table(result);
         basePrompt();
@@ -244,7 +253,7 @@ addEmployee = () => {
                     }
                 ]).then(userInput => {
                     employeeParams.push(userInput.employeeManager);
-                 
+
                     connect.query(`INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, employeeParams, (err, result) => {
                         if (err) throw err;
                         log.green(`Added ` + nameInput.employeeFn + ` ` + nameInput.employeeLn + ` to employees`);
@@ -303,7 +312,7 @@ updateEmployeeRole = () => {
                     employeeParams[1] = userInput.employeeToUpdate;
 
                     connect.query(`UPDATE employee SET role_id = ? WHERE id = ?`, employeeParams, (err, data) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         log.green(`Updated employee role`);
                         basePrompt();
                     })
