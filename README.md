@@ -4,7 +4,7 @@
   ![](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)
   ![](https://img.shields.io/badge/MySQL-005C84?style=flat&logo=mysql&logoColor=white)
   ## Description
-  A command-line application that can be used to manage a company's employee database, using Node.js, Inquirer, and MySQL
+ A CMS (Content Management System) Interface/command-line application that can be used to manage a company's employee database, using Node.js, Inquirer, and MySQL.
   ## Table of Contents
   - [Installation](#installation)
   - [Usage](#usage)
