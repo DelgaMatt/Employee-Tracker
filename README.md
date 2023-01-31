@@ -10,7 +10,6 @@
   - [Usage](#usage)
   - [Contribute](#contributing)
   - [License](#license)
-  - [Tests](#tests)
   - [Questions?](#questions)
   ## Installation
   To install this application, clone the reponsitory onto your local machine
